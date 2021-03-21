@@ -321,3 +321,24 @@ export function calculateLengths(all_poses) {
   }
   return avgLengths;
 }
+
+export function transformKeypoints(keypoints, trainerRefPoint) {
+  if (typeof(trainerRefPoint) != "undefined" && typeof(referencePoint) != "undefined") {
+    var scaleFactor = lengths_user.right_upper_arm[2] / lengths_trainer.right_upper_arm[2];
+    trainerRefPoint.position.x *= scaleFactor;
+    trainerRefPoint.position.y *= scaleFactor;
+    var shiftX = referencePoint.x - trainerRefPoint.position.x;
+    var shiftY = referencePoint.y - trainerRefPoint.position.y;
+
+    for (var i=0;i<keypoints.length;i++) {
+      if (keypoints[i].part != "rightShoulder") {
+        keypoints[i].position.x *= scaleFactor;
+        keypoints[i].position.y *= scaleFactor;
+      }
+      keypoints[i].position.x += shiftX;
+      keypoints[i].position.y += shiftY;
+    }
+  }
+
+  return keypoints;
+}
