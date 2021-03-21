@@ -13,9 +13,12 @@ const videoWidth = 700;
 const videoHeight = Math.round(videoWidth * (500/600));
 const stats = new Stats();
 
-var startRecording = false;
-var framectr = 0;
-var all_poses = {};
+// Factors that change per exercise: refernce body part/segment, point name to take as "origin"
+var exercises = {
+  "Arm Curls": ["right_upper_arm", "rightShoulder"],
+  "Pushups": []
+}
+
 // var fs = require('browserify-fs');
 
 /**
@@ -102,199 +105,63 @@ const guiState = {
  */
 function setupGui(cameras, net) {
   guiState.net = net;
-  //
-  // if (cameras.length > 0) {
-  //   guiState.camera = cameras[0].deviceId;
-  // }
-
-  // const gui = new dat.GUI({width: 300});
-
-  // let architectureController = null;
-  // guiState[tryResNetButtonName] = function() {
-  //   architectureController.setValue('ResNet50')
-  // };
-  // gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
-  // updateTryResNetButtonDatGuiCss();
-
-  // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
-  // const algorithmController =
-  //     gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
-
-  // The input parameters have the most effect on accuracy and speed of the
-  // network
-  // let input = gui.addFolder('Input');
-  // Architecture: there are a few PoseNet models varying in size and
-  // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
-  // fastest, but least accurate.
-  // architectureController =
-  //     input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
-  // guiState.architecture = guiState.input.architecture;
-  // Input resolution:  Internally, this parameter affects the height and width
-  // of the layers in the neural network. The higher the value of the input
-  // resolution the better the accuracy but slower the speed.
-
-  // let inputResolutionController = null;
-  // function updateGuiInputResolution(
-  //     inputResolution,
-  //     inputResolutionArray,
-  // ) {
-  //   if (inputResolutionController) {
-  //     inputResolutionController.remove();
-  //   }
-  //   guiState.inputResolution = inputResolution;
-  //   guiState.input.inputResolution = inputResolution;
-  //   inputResolutionController =
-  //       input.add(guiState.input, 'inputResolution', inputResolutionArray);
-  //   inputResolutionController.onChange(function(inputResolution) {
-  //     guiState.changeToInputResolution = inputResolution;
-  //   });
-  // }
-
-  // Output stride:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The lower the value of the output stride
-  // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy.
-
-  // let outputStrideController = null;
-  // function updateGuiOutputStride(outputStride, outputStrideArray) {
-  //   if (outputStrideController) {
-  //     outputStrideController.remove();
-  //   }
-  //   guiState.outputStride = outputStride;
-  //   guiState.input.outputStride = outputStride;
-  //   outputStrideController =
-  //       input.add(guiState.input, 'outputStride', outputStrideArray);
-  //   outputStrideController.onChange(function(outputStride) {
-  //     guiState.changeToOutputStride = outputStride;
-  //   });
-  // }
-
-  // Multiplier: this parameter affects the number of feature map channels in
-  // the MobileNet. The higher the value, the higher the accuracy but slower the
-  // speed, the lower the value the faster the speed but lower the accuracy.
-
-  // let multiplierController = null;
-  // function updateGuiMultiplier(multiplier, multiplierArray) {
-  //   if (multiplierController) {
-  //     multiplierController.remove();
-  //   }
-  //   guiState.multiplier = multiplier;
-  //   guiState.input.multiplier = multiplier;
-  //   multiplierController =
-  //       input.add(guiState.input, 'multiplier', multiplierArray);
-  //   multiplierController.onChange(function(multiplier) {
-  //     guiState.changeToMultiplier = multiplier;
-  //   });
-  // }
-
-  // QuantBytes: this parameter affects weight quantization in the ResNet50
-  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher
-  // the value, the larger the model size and thus the longer the loading time,
-  // the lower the value, the shorter the loading time but lower the accuracy.
-
-  // let quantBytesController = null;
-  // function updateGuiQuantBytes(quantBytes, quantBytesArray) {
-  //   if (quantBytesController) {
-  //     quantBytesController.remove();
-  //   }
-  //   guiState.quantBytes = +quantBytes;
-  //   guiState.input.quantBytes = +quantBytes;
-  //   quantBytesController =
-  //       input.add(guiState.input, 'quantBytes', quantBytesArray);
-  //   quantBytesController.onChange(function(quantBytes) {
-  //     guiState.changeToQuantBytes = +quantBytes;
-  //   });
-  // }
-
-  // function updateGui() {
-  //   if (guiState.input.architecture === 'MobileNetV1') {
-  //     updateGuiInputResolution(
-  //         defaultMobileNetInputResolution,
-  //         [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
-  //     updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
-  //     updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0]);
-  //   } else {  // guiState.input.architecture === "ResNet50"
-  //     updateGuiInputResolution(
-  //         defaultResNetInputResolution,
-  //         [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
-  //     updateGuiOutputStride(defaultResNetStride, [32, 16]);
-  //     updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
-  //   }
-  //   updateGuiQuantBytes(defaultQuantBytes, [1, 2, 4]);
-  // }
-  //
-  // // updateGui();
-  // // input.open();
-  //
-  // // Pose confidence: the overall confidence in the estimation of a person's
-  // // pose (i.e. a person detected in a frame)
-  // // Min part confidence: the confidence that a particular estimated keypoint
-  // // position is accurate (i.e. the elbow's position)
-  // let single = gui.addFolder('Single Pose Detection');
-  // single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  // single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-  //
-  // let multi = gui.addFolder('Multi Pose Detection');
-  // multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
-  //     .min(1)
-  //     .max(20)
-  //     .step(1);
-  // multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  // multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
-  // // nms Radius: controls the minimum distance between poses that are returned
-  // // defaults to 20, which is probably fine for most use cases
-  // multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
-  // multi.open();
-  //
-  // let output = gui.addFolder('Output');
-  // output.add(guiState.output, 'showVideo');
-  // output.add(guiState.output, 'showSkeleton');
-  // output.add(guiState.output, 'showPoints');
-  // output.add(guiState.output, 'showBoundingBox');
-  // output.open();
-  //
-  //
-  // architectureController.onChange(function(architecture) {
-  //   // if architecture is ResNet50, then show ResNet50 options
-  //   updateGui();
-  //   guiState.changeToArchitecture = architecture;
-  // });
-  //
-  // algorithmController.onChange(function(value) {
-  //   switch (guiState.algorithm) {
-  //     case 'single-pose':
-  //       multi.close();
-  //       single.open();
-  //       break;
-  //     case 'multi-pose':
-  //       single.close();
-  //       multi.open();
-  //       break;
-  //   }
-  // });
 }
 
 /**
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.getElementById('main').appendChild(stats.dom);
+  // stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  // document.getElementById('main').appendChild(stats.dom);
+  var startElement = document.getElementById('start');
 
-  document.getElementById('start').onclick = function () {
-    startRecording = true;
-    alert("begin called");
-  }
+  startElement.onclick = function () {
+    alert("button pressed");
+
+  };
   document.getElementById('end').onclick = function () {
-    startRecording = false;
-    console.log( JSON.stringify(all_poses));
-    var trainer_lengths = calculateLengths(raw_poses_user);
-    console.log( JSON.stringify(trainer_lengths));
+    alert("ya so like");
+
+  };
+  document.getElementById('recommendation').onclick = function () {
+    alert("Change button pressed");
+    document.getElementById('recommendation-text').innerHTML = 'hello';
+  };
+}
+
+
+function drawVideo(video, keypoints, minPartConfidence, ctx) {
+  ctx.clearRect(0, 0, videoWidth, videoHeight);
+  if (guiState.output.showVideo) {
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.translate(-videoWidth, 0);
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+
+    ctx.restore();
+  }
+
+
+}
+
+function clearCanvas(video, net, ctx) {
+  ctx.clearRect(0, 0, videoWidth, videoHeight);
+  if (guiState.output.showVideo) {
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.translate(-videoWidth, 0);
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+    ctx.restore();
   }
 }
 
+function wait(ms) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+      now = Date.now();
+    }
+}
 
 /**
  * Feeds an image to posenet to estimate poses - this is where the magic
@@ -313,92 +180,24 @@ function detectPoseInRealTime(video, net) {
   canvas.width = videoWidth;
   canvas.height = videoHeight;
   var ctr = 0;
-  async function poseDetectionFrame() {
-    // if (guiState.changeToArchitecture) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.changeToArchitecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.architecture = guiState.changeToArchitecture;
-    //   guiState.changeToArchitecture = null;
-    // }
-    //
-    // if (guiState.changeToMultiplier) {
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: +guiState.changeToMultiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.multiplier = +guiState.changeToMultiplier;
-    //   guiState.changeToMultiplier = null;
-    // }
-    //
-    // if (guiState.changeToOutputStride) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: +guiState.changeToOutputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.outputStride = +guiState.changeToOutputStride;
-    //   guiState.changeToOutputStride = null;
-    // }
-    //
-    // if (guiState.changeToInputResolution) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: +guiState.changeToInputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.quantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.inputResolution = +guiState.changeToInputResolution;
-    //   guiState.changeToInputResolution = null;
-    // }
-    //
-    // if (guiState.changeToQuantBytes) {
-    //   // Important to purge variables and free up GPU memory
-    //   guiState.net.dispose();
-    //   toggleLoadingUI(true);
-    //   guiState.net = await posenet.load({
-    //     architecture: guiState.architecture,
-    //     outputStride: guiState.outputStride,
-    //     inputResolution: guiState.inputResolution,
-    //     multiplier: guiState.multiplier,
-    //     quantBytes: guiState.changeToQuantBytes
-    //   });
-    //   toggleLoadingUI(false);
-    //   guiState.quantBytes = guiState.changeToQuantBytes;
-    //   guiState.changeToQuantBytes = null;
-    // }
+  var numElapsedFrames = 0;
+  var calibrate = true;
+  const numCalibrateFrames = 5;
+  const numRTframes = 5;
+  var lengths_user_rt;
+  var framectr_calibrate = 0;
+  var framectr_rt = 0;
+  var calibration_poses = {};
+  var all_poses = {}
 
+  async function poseDetectionFrame() {
     // Begin monitoring code for frames per second
     stats.begin();
 
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
-    let all_poses = await guiState.net.estimatePoses(video, {
+    let all_the_poses = await guiState.net.estimatePoses(video, {
       flipHorizontal: flipPoseHorizontal,
       decodingMethod: 'multi-person',
       maxDetections: guiState.multiPoseDetection.maxPoseDetections,
@@ -406,90 +205,101 @@ function detectPoseInRealTime(video, net) {
       nmsRadius: guiState.multiPoseDetection.nmsRadius
     });
 
-    poses = poses.concat(all_poses);
+    poses = poses.concat(all_the_poses);
     minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
     minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
-    // break;
 
-    // switch (guiState.algorithm) {
-    //   case 'single-pose':
-    //     const pose = await guiState.net.estimatePoses(video, {
-    //       flipHorizontal: flipPoseHorizontal,
-    //       decodingMethod: 'single-person'
-    //     });
-    //     poses = poses.concat(pose);
-    //     minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
-    //     minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
-    //     break;
-    //   case 'multi-pose':
-    //
-    // }
+    clearCanvas(video, net, ctx);
 
-    ctx.clearRect(0, 0, videoWidth, videoHeight);
-
-    if (guiState.output.showVideo) {
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.translate(-videoWidth, 0);
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-      ctx.restore();
+    if (calibrate) {
+      if (numElapsedFrames == 5) {
+        alert("Please match your skeleton to the pose shown");
+      }
+      drawKeypoints(raw_poses_user["frame_1"], minPartConfidence, ctx);
+      drawTrainerSkeleton(raw_poses_user["frame_1"], minPartConfidence, ctx, 'trainer');
     }
 
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
-    console.log(Object.keys(poses).length);
-    var rightShoulderUser;
+    // console.log(Object.keys(poses).length);
+    var referencePoint;
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
-        rightShoulderUser = keypoints[6].position;
-        if (startRecording) {
-          all_poses['frame_' + framectr.toString()] = keypoints;
-          framectr += 1;
-        }
+        referencePoint = keypoints[6].position;
+        var numParts = 0;
 
-        if (guiState.output.showPoints) {
-          drawKeypoints(keypoints, minPartConfidence, ctx);
+        if (!calibrate) {
+          all_poses['frame_' + framectr_rt.toString()] = keypoints;
+          lengths_user_rt = calculateLengths(all_poses);
+          framectr_rt = (framectr_rt + 1) % numRTframes
+        } else {
+          for (var i=0;i<keypoints.length;i++) {
+            var bodyPart = keypoints[i];
+
+            if (bodyPart["score"] >= 0.20 && i >= 5) {
+              numParts += 1;
+            }
+          }
+          console.log(numParts);
+          if (numParts == 12) {
+            calibration_poses['frame_' + framectr_calibrate.toString()] = keypoints;
+            framectr_calibrate += 1;
+            if (framectr_calibrate == numCalibrateFrames) {
+              calibrate = false;
+              // console.log( JSON.stringify(calibration_poses));
+              //
+              // console.log( "LENGTHS: ");
+              // console.log( JSON.stringify(lengths_user_rt));
+              alert("Calibration complete. Let's start the exercise!");
+              all_poses = calibration_poses;
+              lengths_user_rt = calculateLengths(all_poses);
+            }
+          }
         }
-        if (guiState.output.showSkeleton) {
-          drawSkeleton(keypoints, minPartConfidence, ctx);
-        }
-        if (guiState.output.showBoundingBox) {
-          drawBoundingBox(keypoints, ctx);
-        }
+        drawKeypoints(keypoints, minPartConfidence, ctx);
+        drawSkeleton(keypoints, minPartConfidence, ctx);
       }
     });
 
-    var keypoints = raw_poses_trainer["frame_"+ctr.toString()];
-    var trainerRightShoulder = keypoints[6];
 
 
-    if (typeof(trainerRightShoulder) != "undefined" && typeof(rightShoulderUser) != "undefined") {
-      var scaleFactor = lengths_user.right_upper_arm[2] / lengths_trainer.right_upper_arm[2];
-      trainerRightShoulder.position.x *= scaleFactor;
-      trainerRightShoulder.position.y *= scaleFactor;
-      var shiftX = rightShoulderUser.x - trainerRightShoulder.position.x;
-      var shiftY = rightShoulderUser.y - trainerRightShoulder.position.y;
+    //keypoints_trainer = transformKeypoints(keypoints_trainer, trainerRefPoint);
+    if (!calibrate) {
+      var keypoints_trainer = raw_poses_trainer["frame_"+ctr.toString()];
+      var trainerRefPoint = keypoints_trainer[6];
 
-      for (var i=0;i<keypoints.length;i++) {
-        if (keypoints[i].part != "rightShoulder") {
-          keypoints[i].position.x *= scaleFactor;
-          keypoints[i].position.y *= scaleFactor;
+      //console.log( JSON.stringify(lengths_user_rt));
+      //alert("scaling");
+      if (typeof(trainerRefPoint) != "undefined" && typeof(referencePoint) != "undefined") {
+        var scaleFactor = lengths_user_rt["right_upper_arm"][2] / lengths_trainer["right_upper_arm"][2];
+        console.log("SCALE FACTOR: ");
+        console.log(scaleFactor);
+        trainerRefPoint["position"]["x"] *= scaleFactor;
+        trainerRefPoint["position"]["y"] *= scaleFactor;
+        var shiftX = referencePoint["x"] - trainerRefPoint["position"]["x"];
+        var shiftY = referencePoint["y"] - trainerRefPoint["position"]["y"];
+
+        for (var i=0;i<keypoints_trainer.length;i++) {
+          if (keypoints_trainer[i]["part"] != "rightShoulder") {
+            keypoints_trainer[i]["position"]["x"] *= scaleFactor;
+            keypoints_trainer[i]["position"]["y"] *= scaleFactor;
+          }
+          keypoints_trainer[i]["position"]["x"] += shiftX;
+          keypoints_trainer[i]["position"]["y"] += shiftY;
         }
-        keypoints[i].position.x += shiftX;
-        keypoints[i].position.y += shiftY;
       }
+
+      drawTrainerSkeleton(keypoints_trainer, minPartConfidence, ctx, 'trainer');
     }
 
-    if (guiState.output.showSkeleton) {
-      drawTrainerSkeleton(keypoints, minPartConfidence, ctx, 'trainer');
-    }
 
     // End monitoring code for frames per second
     stats.end();
 
     ctr = (ctr + 1) % (Object.keys(raw_poses_trainer).length);
-    setTimeout(() => {  console.log("COUNTER: ", ctr);  }, 5);
+    numElapsedFrames = (numElapsedFrames + 1) % 1000;
+    // setTimeout(() => {  console.log("COUNTER: ", ctr);  }, 5);
     requestAnimationFrame(poseDetectionFrame);
   }
 
@@ -533,3 +343,4 @@ navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
+ 
