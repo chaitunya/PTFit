@@ -14,17 +14,54 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
-import * as tf from '@tensorflow/tfjs-core';
-
-const color = 'aqua';
-const boundingBoxColor = 'red';
-const lineWidth = 2;
-
-export const tryResNetButtonName = 'tryResNetButton';
-export const tryResNetButtonText = '[New] Try ResNet50';
-const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
-const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+ import * as posenet from '@tensorflow-models/posenet';
+ import * as tf from '@tensorflow/tfjs';
+ import lengths_trainer from './lengths_trainer.json';
+ import lengths_user from './lengths_user.json';
+ 
+ var color = 'aqua';
+ var boundingBoxColor = 'red';
+ var lineWidth = 2;
+ 
+ export const tryResNetButtonName = 'tryResNetButton';
+ export const tryResNetButtonText = '[New] Try ResNet50';
+ const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
+ const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+ 
+ const allPoints = {
+   "nose" : 0,
+   "leftEye" : 1,
+   "rightEye" : 2,
+   "leftEar" : 3,
+   "rightEar" : 4,
+   "leftShoulder" : 5,
+   "rightShoulder" : 6,
+   "leftElbow" : 7,
+   "rightElbow" : 8,
+   "leftWrist" : 9,
+   "rightWrist" : 10,
+   "leftHip" : 11,
+   "rightHip" : 12,
+   "leftKnee" : 13,
+   "rightKnee" : 14,
+   "leftAnkle" : 15,
+   "rightAnkle" : 16
+ }
+ 
+ var avgLengths = {
+   "torso_top": [5,6,0],
+   "torso_bottom": [11,12,0],
+   "torso_right": [6,12,0],
+   "torso_left": [5,11,0],
+   "left_upper_arm": [5,7,0],
+   "right_upper_arm": [6,8,0],
+   "left_forearm": [7,9,0],
+   "right_forearm": [8,10,0],
+   "left_thigh": [11,13,0],
+   "right_thigh": [12,14,0],
+   "left_calf": [13,15,0],
+   "right_calf": [14,16,0]
+ }
 
 function isAndroid() {
   return /Android/i.test(navigator.userAgent);
