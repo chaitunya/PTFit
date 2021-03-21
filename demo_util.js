@@ -142,15 +142,30 @@ export function drawPoint(ctx, y, x, r, color) {
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
-export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
+ export function drawSkeleton(keypoints, minConfidence, ctx, person=undefined, scale = 1) {
+
   const adjacentKeyPoints =
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
+    // if (keypoints[0].part.includes("Knee") || keypoints[0].part.includes("Ankle")) {
+    //   return;
+    // }
     drawSegment(
         toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
-        scale, ctx);
+        scale, ctx, person);
   });
+}
+
+/**
+ * Draws a pose skeleton by looking up all adjacent keypoints/joints
+ */
+ export function drawTrainerSkeleton(keypoints, minConfidence, ctx, person=undefined ) {
+  color = 'red';
+  lineWidth = 4;
+  drawSkeleton(keypoints, minConfidence, ctx, person );
+  color = 'yellow';
+  lineWidth = 3;
 }
 
 /**
