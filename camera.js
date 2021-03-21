@@ -53,3 +53,78 @@ async function setupCamera() {
     };
   });
 }
+
+async function loadVideo() {
+  const video = await setupCamera();
+  // const video = document.getElementById('video');
+  video.play();
+
+  return video;
+}
+
+const defaultQuantBytes = 2;
+
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 500;
+
+const defaultResNetMultiplier = 1.0;
+const defaultResNetStride = 32;
+const defaultResNetInputResolution = 250;
+
+const guiState = {
+  algorithm: 'multi-pose',
+  input: {
+    architecture: 'MobileNetV1',
+    outputStride: defaultMobileNetStride,
+    inputResolution: defaultMobileNetInputResolution,
+    multiplier: defaultMobileNetMultiplier,
+    quantBytes: defaultQuantBytes
+  },
+  singlePoseDetection: {
+    minPoseConfidence: 0.1,
+    minPartConfidence: 0.5,
+  },
+  multiPoseDetection: {
+    maxPoseDetections: 5,
+    minPoseConfidence: 0.15,
+    minPartConfidence: 0.1,
+    nmsRadius: 30.0,
+  },
+  output: {
+    showVideo: true,
+    showSkeleton: true,
+    showPoints: true,
+    showBoundingBox: false,
+  },
+  net: null,
+};
+
+/**
+ * Sets up dat.gui controller on the top-right of the window
+ */
+function setupGui(cameras, net) {
+  guiState.net = net;
+}
+
+/**
+ * Sets up a frames per second panel on the top-left of the window
+ */
+function setupFPS() {
+  // stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  // document.getElementById('main').appendChild(stats.dom);
+  var startElement = document.getElementById('start');
+
+  startElement.onclick = function () {
+    alert("button pressed :g_:");
+
+  };
+  document.getElementById('end').onclick = function () {
+    alert("ya so like do et oren");
+
+  };
+  document.getElementById('recommendation').onclick = function () {
+    alert("Change button pressed :juicert:");
+    document.getElementById('recommendation-text').innerHTML = 'hello';
+  };
+}
