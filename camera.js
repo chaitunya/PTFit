@@ -12,3 +12,44 @@ import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI,
 const videoWidth = 700;
 const videoHeight = Math.round(videoWidth * (500/600));
 const stats = new Stats();
+
+// Factors that change per exercise: refernce body part/segment, point name to take as "origin"
+var exercises = {
+  "Arm Curls": ["right_upper_arm", "rightShoulder"],
+  "Pushups": []
+}
+
+// var fs = require('browserify-fs');
+
+/**
+ * Loads a the camera to be used in the demo
+ *
+ */
+async function setupCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error(
+        'Browser API navigator.mediaDevices.getUserMedia not available');
+  }
+
+  const video = document.getElementById('video');
+  video.width = videoWidth;
+  video.height = videoHeight;
+
+  const mobile = isMobile();
+  const stream = await navigator.mediaDevices.getUserMedia({
+    'audio': false,
+    'video': {
+      facingMode: 'user',
+      width: mobile ? undefined : videoWidth,
+      height: mobile ? undefined : videoHeight,
+    },
+  });
+  video.srcObject = stream;
+  // video.src = "train.mp4";
+
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+}
