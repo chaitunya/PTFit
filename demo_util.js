@@ -122,27 +122,50 @@ export function drawPoint(ctx, y, x, r, color) {
 /**
  * Draws a line on a canvas, i.e. a joint
  */
-export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
+ export function drawSegment([ay, ax], [by, bx], color, scale, ctx, person=undefined) {
   ctx.beginPath();
   ctx.moveTo(ax * scale, ay * scale);
   ctx.lineTo(bx * scale, by * scale);
+  if (person) {
+    ctx.setLineDash([10, 3]);
+    ctx.restore();
+  } else {
+    ctx.setLineDash([0]);
+  }
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
+
+}
+
+
+/**
+ * Draws a pose skeleton by looking up all adjacent keypoints/joints
+ */
+ export function drawSkeleton(keypoints, minConfidence, ctx, person=undefined, scale = 1) {
+
+  const adjacentKeyPoints =
+      posenet.getAdjacentKeyPoints(keypoints, minConfidence);
+
+  adjacentKeyPoints.forEach((keypoints) => {
+    // if (keypoints[0].part.includes("Knee") || keypoints[0].part.includes("Ankle")) {
+    //   return;
+    // }
+    drawSegment(
+        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
+        scale, ctx, person);
+  });
 }
 
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
-export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
-  const adjacentKeyPoints =
-      posenet.getAdjacentKeyPoints(keypoints, minConfidence);
-
-  adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(
-        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
-        scale, ctx);
-  });
+ export function drawTrainerSkeleton(keypoints, minConfidence, ctx, person=undefined ) {
+  color = 'red';
+  lineWidth = 4;
+  drawSkeleton(keypoints, minConfidence, ctx, person );
+  color = 'yellow';
+  lineWidth = 3;
 }
 
 /**
