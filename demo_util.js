@@ -289,3 +289,35 @@ export function drawOffsetVectors(
         [heatmapY, heatmapX], [offsetPointY, offsetPointX], color, scale, ctx);
   }
 }
+
+function distanceFormula(point1, point2) {
+  return Math.sqrt(Math.pow(point2.position.y - point1.position.y, 2) + Math.pow(point2.position.x - point1.position.x, 2));
+}
+/*
+"torso_top": 0,
+"torso_bottom": 0,
+"torso_right": 0,
+"torso_left": 0,
+"left_upper_arm": 0,
+"right_upper_arm": 0,
+"left_forearm": 0,
+"right_forearm": 0,
+"left_thigh": 0,
+"right_thigh": 0,
+"left_calf": 0,
+"right_calf": 0
+*/
+export function calculateLengths(all_poses) {
+  for (var frame_name in all_poses) {
+    var frame_num = parseInt(frame_name.split('_')[1]);
+
+    for (var segment in avgLengths) {
+      var ind1 = avgLengths[segment][0];
+      var ind2 = avgLengths[segment][1];
+      var currAvg = avgLengths[segment][2];
+
+      avgLengths[segment][2] = (currAvg * frame_num + distanceFormula(all_poses[frame_name][ind1], all_poses[frame_name][ind2])) / (frame_num + 1);;
+    }
+  }
+  return avgLengths;
+}
