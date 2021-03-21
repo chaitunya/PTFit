@@ -122,14 +122,22 @@ export function drawPoint(ctx, y, x, r, color) {
 /**
  * Draws a line on a canvas, i.e. a joint
  */
-export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
+ export function drawSegment([ay, ax], [by, bx], color, scale, ctx, person=undefined) {
   ctx.beginPath();
   ctx.moveTo(ax * scale, ay * scale);
   ctx.lineTo(bx * scale, by * scale);
+  if (person) {
+    ctx.setLineDash([10, 3]);
+    ctx.restore();
+  } else {
+    ctx.setLineDash([0]);
+  }
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
+
 }
+
 
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
